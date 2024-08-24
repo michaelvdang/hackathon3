@@ -1,0 +1,13 @@
+2 modes:
+
+read:
+highlight places where there are comments
+maybe show comments to the side or make highlights into button with popups
+user cannot click on text to add comment (edit mode)
+
+add comment:
+doesn't highlight comments positions
+user can click on document to add comment 
+exits edit mode after submission to show all comments highlighted
+
+
