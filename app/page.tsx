@@ -35,6 +35,7 @@ export default function Home() {
       const rect = containerRef.current.getBoundingClientRect();
       console.log('useLayoutRect: ', rect);
 
+      // setContainerTopOffset(0);
       setContainerTopOffset(rect.top);
     }
   }, []);
@@ -67,7 +68,7 @@ export default function Home() {
   }
   
   const addComment = () => {
-    commentsMap.set(`${divIndex}-${cursorIndex}`, { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newComment, x: clickPosition.x, y: clickPosition.y + scrollPosition, dialogHeight: 0, bottomOffset: 0 });
+    commentsMap.set(divIndex, { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newComment, x: clickPosition.x, y: clickPosition.y + scrollPosition, dialogHeight: 0, bottomOffset: 0 });
 
     convertCommentsMapToArray();
     // // convert map to comments array
@@ -96,8 +97,8 @@ export default function Home() {
     const key = `${divIndex}-${cursorIndex}`
     console.log('index: ', key);
     console.log("map keys: ", commentsMap.keys());
-    console.log("map has key: ", commentsMap.has((key)));
-    const deletedComment = commentsMap.delete((key));
+    console.log("map has key: ", commentsMap.has((divIndex)));
+    const deletedComment = commentsMap.delete((divIndex));
     console.log('deletedComment: ', deletedComment);
     setComments(comments.filter((comment) => comment.divIndex !== divIndex && comment.cursorIndex !== cursorIndex));
   };
@@ -106,7 +107,7 @@ export default function Home() {
     <>
     <div
       ref={containerRef}
-      className=" bg-red-400 max-w-screen-xl mx-auto mt-16 h-screen"
+      className=" bg-red-400 max-w-screen-xl mx-auto mt-16"
     >
       {/* container for transcript and comments sections */}
       <div 
@@ -114,7 +115,7 @@ export default function Home() {
       >
         {/* transcript section  */}
         <div 
-          className=" bg-orange-300 min-w-[960px] w-[960px] flex-grow"
+          className=" bg-orange-300 min-w-[960px] w-[960px] flex-grow relative"
         >
           <Transcript 
             comments={comments} 
@@ -150,7 +151,7 @@ export default function Home() {
                   const updatedComments = [...comments];
                   updatedComments[index].dialogHeight = height;
                   setComments(updatedComments);
-                  commentsMap.set(`${comment.divIndex}-${comment.cursorIndex}`, { ...comment, dialogHeight: height });
+                  commentsMap.set(comment.divIndex, { ...comment, dialogHeight: height });
                 }}
               />
             )
@@ -171,11 +172,11 @@ export default function Home() {
       </div>
       {/* comments summary section  */}
       
-    </div>
     <div
       className="bg-yellow-700"
     >
       Bottom
+    </div>
     </div>
     </>
   );

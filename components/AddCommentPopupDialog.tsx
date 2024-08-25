@@ -45,7 +45,7 @@ const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, ver
   return (
     <div
       ref={dialogRef}
-      className="absolute w-[200px] z-50 bg-white border border-gray-300 p-4 shadow-lg"
+      className="absolute w-[300px] z-50 bg-white border border-gray-300 p-4 shadow-lg"
       style={{ top: position.top, left: position.left }}
       onClick={(e) => e.stopPropagation()}
     >

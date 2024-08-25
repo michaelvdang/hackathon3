@@ -11,4 +11,4 @@ export interface Comment {
 }
 
 
-export type CommentMap = Map<string, Comment>;
+export type CommentMap = Map<number, Comment>;

@@ -76,8 +76,8 @@ const Transcript: React.FC<TranscriptProps> = ({
     console.log('key: ', key);
 
     // check commentsMap for comment at cursor position
-    if (commentsMap.has(key)) {
-      const comment = commentsMap.get(key);
+    if (commentsMap.has(divIndex)) {
+      const comment = commentsMap.get(divIndex);
       if (comment) {
         setNewComment(comment.content);
       }
@@ -102,7 +102,7 @@ const Transcript: React.FC<TranscriptProps> = ({
         <div 
           id="mytxt" 
           contentEditable={false} 
-          className="absolute w-full left-0 right-0 top-0 border-2 border-white"
+          className="w-full border-2 border-white"
         >
           {comments.reduce((acc, comment, idx) => {
             console.log('comment: ', comment);
