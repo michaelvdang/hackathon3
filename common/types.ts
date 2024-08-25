@@ -6,6 +6,7 @@ export interface Comment {
   x: number;
   y: number;
   dialogHeight: number;
+  bottomOffset: number;
 }
 
 export type CommentMap = Map<number, Comment>;

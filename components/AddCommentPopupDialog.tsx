@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 type AddCommentPopupDialogProps = {
   x: number;
   y: number;
+  verticalOffset?: number
   parentWidth?: number
   textValue: string
   setTextValue: (textValue: string) => void
@@ -11,11 +12,13 @@ type AddCommentPopupDialogProps = {
   onSubmit: () => void;
 };
 
-const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, parentWidth = 10000, textValue, setTextValue,onClose, onSubmit }) => {
+const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, verticalOffset = 0, parentWidth = 10000, textValue, setTextValue,onClose, onSubmit }) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const dialogRef = useRef<HTMLDivElement>(null);
   const [dialogWidth, setDialogWidth] = useState(0);
 
+  console.log("verticalOffset: ", verticalOffset);
+  
   useEffect(() => {
     // get dialog width to adjust for overflow on right side
     if (dialogRef.current) {
@@ -26,7 +29,7 @@ const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, par
 
   useEffect(() => {
     // Adjust position to account for dialog size
-    const verticalOffset = -64; // Add some offset to avoid placing it directly under the cursor
+    // const verticalOffset = -64; // Add some offset to avoid placing it directly under the cursor
     const offset = 0; // Add some offset to avoid placing it directly under the cursor
     // console.log('x: ', x);
     // console.log('dialogWidth: ', dialogWidth);

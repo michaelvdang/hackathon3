@@ -1,7 +1,7 @@
 'use client'
 import Image from "next/image";
 import conversation from "../conversation.json";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Transcript from "@/components/Transcript";
 import { Comment, CommentMap } from "@/common/types";
 import AddCommentPopupDialog from "@/components/AddCommentPopupDialog";
@@ -17,27 +17,63 @@ export default function Home() {
   const [comments, setComments] = useState<Comment[]>([]);  // to render comments
   const [commentsMap, setCommentsMap] = useState<CommentMap>(new Map());  // to remove comments
   const [showPopup, setShowPopup] = useState(false);
-  const [commentIndex, setCommentIndex] = useState<number>(0);
-  const [newComment, setNewComment] = useState<string>('');
+  const [commentIndex, setCommentIndex] = useState<number>(0); // position of the cursor in the transcript, 'I like cats', comment at k would make commentIndex = 4
+  const [newComment, setNewComment] = useState<string>(''); // value in the AddCommentPopupDialog
   const closePopup = () => setShowPopup(false);
   const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
+  // const dialogTopOffset = useRef<number>(0);
+  const [dialogTopOffset, setDialogTopOffset] = useState<number[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerTopOffset, setContainerTopOffset] = useState<number>(0);
+  
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      console.log('useLayoutRect: ', rect);
+
+      setContainerTopOffset(rect.top);
+    }
+  }, []);
   
   useEffect(() => {
     console.log('commentsMap: ', commentsMap);
     console.log('comments: ', comments);
   }, [commentsMap, comments]);
-  
-  const addComment = () => {
-    commentsMap.set(commentIndex, { id: randomId(), index: commentIndex, content: newComment, x: clickPosition.x, y: clickPosition.y, dialogHeight: 0 });
 
+  useEffect(() => {
+    // update the minimum offset of the next comment dialog
+    if (comments.length > 0) {
+      let offsets = [comments[0].y];
+      for (let i = 1; i < comments.length; i++) {
+        offsets.push(Math.max(offsets[i-1] + comments[i-1].dialogHeight, comments[i].y));
+      }
+      setDialogTopOffset(offsets);
+    }
+  }, [comments]);
+
+  const convertCommentsMapToArray = () => {
     // convert map to comments array
     let updatedComments: Comment[] = [];
     commentsMap.forEach((comment, index) => {
-      updatedComments.push({ id: comment.id, index, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0 });
+      updatedComments.push({ id: comment.id, index, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0, bottomOffset: 0 });
     })
     updatedComments.sort((a, b) => a.index - b.index);
-    setComments(updatedComments);
+    setComments(() => updatedComments);
     // console.log('updatedComments: ', updatedComments);
+  }
+  
+  const addComment = () => {
+    commentsMap.set(commentIndex, { id: randomId(), index: commentIndex, content: newComment, x: clickPosition.x, y: clickPosition.y, dialogHeight: 0, bottomOffset: 0 });
+
+    convertCommentsMapToArray();
+    // // convert map to comments array
+    // let updatedComments: Comment[] = [];
+    // commentsMap.forEach((comment, index) => {
+    //   updatedComments.push({ id: comment.id, index, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0 });
+    // })
+    // updatedComments.sort((a, b) => a.index - b.index);
+    // setComments(updatedComments);
+    // // console.log('updatedComments: ', updatedComments);
   }
 
   const onSubmit = () => {
@@ -62,79 +98,79 @@ export default function Home() {
   };
   
   return (
+    <>
     <div
-      className=" bg-red-400 max-w-screen-xl mx-auto mt-16"
+      ref={containerRef}
+      className=" bg-red-400 max-w-screen-xl mx-auto mt-16 h-screen"
     >
       {/* container for transcript and comments sections */}
       <div 
-        className="bg-blue-700 flex flex-nowrap min-w-[1200px] "
+        className="bg-blue-700 flex flex-nowrap min-w-[1280px] "
       >
         {/* transcript section  */}
         <div 
-          className=" bg-orange-300 h-screen w-[960px]  overflow-auto"
+          className=" bg-orange-300 min-w-[960px] w-[960px] flex-grow"
         >
-          <div
-            className="w-full h-full"
-          >
-            <Transcript 
-              comments={comments} 
-              setComments={setComments} 
-              commentsMap={commentsMap} 
-              setCommentsMap={setCommentsMap} 
-              setShowPopup={setShowPopup}
-              setClickPosition={setClickPosition}
-              setCommentIndex={setCommentIndex}
-              setNewComment={setNewComment}
-            />
-          </div>
+          <Transcript 
+            comments={comments} 
+            setComments={setComments} 
+            commentsMap={commentsMap} 
+            setCommentsMap={setCommentsMap} 
+            setShowPopup={setShowPopup}
+            setClickPosition={setClickPosition}
+            setCommentIndex={setCommentIndex}
+            setNewComment={setNewComment}
+          />
         </div>
         {/* comments section  */}
         <div 
-          className=" bg-green-700  w-[320px] h-screen overflow-auto"
+          className="relative bg-green-700 min-w-[320px] w-[320px] "
         >
-          <div
-            className="relative w-full h-full"
-          >
-            {comments.map((comment, index) => (
+          {comments.map((comment, index) => {
+            // dialogTopOffset.current = dialogTopOffset.current + comment.dialogHeight;
+            return (
               <CommentDialog
                 key={index}
+                initialY={dialogTopOffset[index] - containerTopOffset}
                 textValue={comment.content}
-                initialY={index * 80}
+                // initialY={dialogTopOffset.current}
                 // y={comment.y}
                 onDelete={() => onDelete(comment.index)}
                 dialogHeight={comment.dialogHeight} // use container to set its own height
                 setDialogHeight={(height: number) => {
                   console.log('setDialogHeight height: ', height);
                   console.log('setDialogHeight comment.index: ', comment.index);
+                  // update dialogHeight
                   const updatedComments = [...comments];
                   updatedComments[index].dialogHeight = height;
                   setComments(updatedComments);
                   commentsMap.set(comment.index, { ...comment, dialogHeight: height });
                 }}
               />
-            ))}
-            {showPopup && (
-              <AddCommentPopupDialog
-                x={clickPosition.x}
-                y={clickPosition.y}
-                // parentWidth={parentWidth}
-                textValue={newComment}
-                setTextValue={setNewComment}
-                onClose={closePopup}
-                onSubmit={onSubmit}
-              />
-            )}
-          </div>
+            )
+          })}
+          {showPopup && (
+            <AddCommentPopupDialog
+              x={clickPosition.x}
+              y={clickPosition.y - containerTopOffset}
+              // verticalOffset={-1 * containerTopOffset}
+              // parentWidth={parentWidth}
+              textValue={newComment}
+              setTextValue={setNewComment}
+              onClose={closePopup}
+              onSubmit={onSubmit}
+            />
+          )}
         </div>
-      </div>
-      <div
-        className="bg-yellow-700"
-      >
-        Bottom
       </div>
       {/* comments summary section  */}
       
     </div>
-    
+    <div
+      className="bg-yellow-700"
+    >
+      Bottom
+    </div>
+    </>
   );
 }

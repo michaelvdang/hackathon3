@@ -16,7 +16,7 @@ type CommentDialog = {
 const CommentDialog: React.FC<CommentDialog> = ({ 
   // x, 
   initialY, 
-  textValue, 
+  textValue,
   onDelete,
   dialogHeight,
   setDialogHeight,
@@ -24,10 +24,10 @@ const CommentDialog: React.FC<CommentDialog> = ({
   // onClose, 
   // onSubmit 
 }) => {
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   // const dialogRef = useRef<HTMLDivElement>(null);
-    const dialogRef = useRef<HTMLDivElement | null>(null);
-
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  
+  const [position, setPosition] = useState({ top: initialY, left: 0 });
   // useEffect(() => {
   //   // Adjust position to account for dialog size
   //   setPosition({
@@ -35,6 +35,13 @@ const CommentDialog: React.FC<CommentDialog> = ({
   //     left: 0,
   //   });
   // }, [y]);
+  useEffect(() => {
+    console.log('initialY: ', initialY);
+    setPosition({
+      top: initialY,
+      left: 0,
+    })
+  }, [initialY]);
 
   useEffect(() => {
     // get dialog width to adjust for overflow on right side
@@ -42,7 +49,7 @@ const CommentDialog: React.FC<CommentDialog> = ({
       console.log('CommentDialog dialogHeight: ', dialogRef.current.offsetHeight);
       setDialogHeight(dialogRef.current.offsetHeight);
     }
-  }, [dialogRef, textValue]);
+  }, [dialogRef, textValue, dialogHeight]);
   
 
   return (
@@ -54,9 +61,9 @@ const CommentDialog: React.FC<CommentDialog> = ({
       //     setDialogHeight(el.offsetHeight);
       //   }
       // }}
-      className="absolute w-[200px] z-50 border border-gray-300 p-4 shadow-lg"
+      className="absolute w-[320px] z-50 border border-gray-300 p-4 shadow-lg"
       // style={{ top: position.top, left: position.left }}
-      style={{ top: initialY, left: 0 }}
+      style={{ top: position.top, left: 0 }}
       onClick={(e) => e.stopPropagation()}
     >
       <div>
