@@ -105,23 +105,24 @@ const Transcript: React.FC<TranscriptProps> = ({
           className="absolute w-full left-0 right-0 top-0 border-2 border-white"
         >
           {comments.reduce((acc, comment, idx) => {
-            const prevIndex = idx === 0 ? 0 : comments[idx - 1].cursorIndex + 1;
+            console.log('comment: ', comment);
+            const prevIndex = idx === 0 ? 0 : comments[idx - 1].divIndex + 1;
 
             acc.push(
-              <span key={`text-${idx}`}>{content.slice(prevIndex, comments[idx].cursorIndex )}</span>
+              <span key={`text-${idx}`}>{content.slice(prevIndex, comments[idx].divIndex )}</span>
             )
             acc.push(
-              <span id={randomId()} key={comment.id} style={{ color: 'red'}}>{content.slice(comments[idx].cursorIndex, comments[idx].cursorIndex + 1)}</span>
+              <span id={randomId()} key={comment.id} style={{ color: 'blue'}}>{content.slice(comments[idx].divIndex, comments[idx].divIndex + 1)}</span>
             )
             return acc;
           }, [] as JSX.Element[])}
-          <span>{content.slice(comments.length > 0 ? comments[comments.length - 1].cursorIndex + 1 : 0)}</span>
+          <span>{content.slice(comments.length > 0 ? comments[comments.length - 1].divIndex + 1 : 0)}</span>
         </div>
         {/* Displaying the actual content in the foreground */}
         <div
           className="absolute  h-full w-full left-0 right-0 top-0 border-2 border-white"
           // onClick={handleDivClick}
-          style={{opacity: 0.5}}
+          style={{opacity: 0}}
         >
           {content}
         </div>

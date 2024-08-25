@@ -7,6 +7,7 @@ import { Comment, CommentMap } from "@/common/types";
 import AddCommentPopupDialog from "@/components/AddCommentPopupDialog";
 import CommentDialog from "@/components/CommentDialog";
 import { comment } from "postcss";
+import useScroll from "@/hooks/useScroll";
 
 // random id generator
 const randomId = () => {
@@ -26,6 +27,8 @@ export default function Home() {
   const [dialogTopOffset, setDialogTopOffset] = useState<number[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerTopOffset, setContainerTopOffset] = useState<number>(0);
+
+  const scrollPosition = useScroll();
   
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -58,13 +61,13 @@ export default function Home() {
     commentsMap.forEach((comment, index) => {
       updatedComments.push({ id: comment.id, cursorIndex: comment.cursorIndex, divIndex: comment.divIndex, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0, bottomOffset: 0 });
     })
-    updatedComments.sort((a, b) => a.divIndex - b.divIndex);
+    updatedComments.sort((a, b) => a.divIndex === b.divIndex ? a.cursorIndex - b.cursorIndex : a.divIndex - b.divIndex); // sort comments first by divIndex and then cursorIndex
     setComments(() => updatedComments);
     // console.log('updatedComments: ', updatedComments);
   }
   
   const addComment = () => {
-    commentsMap.set(`${divIndex}-${cursorIndex}`, { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newComment, x: clickPosition.x, y: clickPosition.y, dialogHeight: 0, bottomOffset: 0 });
+    commentsMap.set(`${divIndex}-${cursorIndex}`, { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newComment, x: clickPosition.x, y: clickPosition.y + scrollPosition, dialogHeight: 0, bottomOffset: 0 });
 
     convertCommentsMapToArray();
     // // convert map to comments array
@@ -155,7 +158,7 @@ export default function Home() {
           {showPopup && (
             <AddCommentPopupDialog
               x={clickPosition.x}
-              y={clickPosition.y - containerTopOffset}
+              y={clickPosition.y - containerTopOffset + scrollPosition}
               // verticalOffset={-1 * containerTopOffset}
               // parentWidth={parentWidth}
               textValue={newComment}
