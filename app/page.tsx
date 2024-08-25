@@ -17,7 +17,8 @@ export default function Home() {
   const [comments, setComments] = useState<Comment[]>([]);  // to render comments
   const [commentsMap, setCommentsMap] = useState<CommentMap>(new Map());  // to remove comments
   const [showPopup, setShowPopup] = useState(false);
-  const [commentIndex, setCommentIndex] = useState<number>(0); // position of the cursor in the transcript, 'I like cats', comment at k would make commentIndex = 4
+  const [cursorIndex, setCursorIndex] = useState<number>(0); // position of the cursor in the transcript, 'I like cats', comment at k would make cursorIndex = 4
+  const [divIndex, setDivIndex] = useState<number>(0);
   const [newComment, setNewComment] = useState<string>(''); // value in the AddCommentPopupDialog
   const closePopup = () => setShowPopup(false);
   const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
@@ -55,15 +56,15 @@ export default function Home() {
     // convert map to comments array
     let updatedComments: Comment[] = [];
     commentsMap.forEach((comment, index) => {
-      updatedComments.push({ id: comment.id, index, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0, bottomOffset: 0 });
+      updatedComments.push({ id: comment.id, cursorIndex: comment.cursorIndex, divIndex: comment.divIndex, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0, bottomOffset: 0 });
     })
-    updatedComments.sort((a, b) => a.index - b.index);
+    updatedComments.sort((a, b) => a.divIndex - b.divIndex);
     setComments(() => updatedComments);
     // console.log('updatedComments: ', updatedComments);
   }
   
   const addComment = () => {
-    commentsMap.set(commentIndex, { id: randomId(), index: commentIndex, content: newComment, x: clickPosition.x, y: clickPosition.y, dialogHeight: 0, bottomOffset: 0 });
+    commentsMap.set(`${divIndex}-${cursorIndex}`, { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newComment, x: clickPosition.x, y: clickPosition.y, dialogHeight: 0, bottomOffset: 0 });
 
     convertCommentsMapToArray();
     // // convert map to comments array
@@ -88,13 +89,14 @@ export default function Home() {
     closePopup();
   };
   
-  const onDelete = (index: number) => {
-    console.log('index: ', index);
+  const onDelete = (divIndex: number, cursorIndex: number) => {
+    const key = `${divIndex}-${cursorIndex}`
+    console.log('index: ', key);
     console.log("map keys: ", commentsMap.keys());
-    console.log("map has index: ", commentsMap.has((index)));
-    const deletedComment = commentsMap.delete((index));
+    console.log("map has key: ", commentsMap.has((key)));
+    const deletedComment = commentsMap.delete((key));
     console.log('deletedComment: ', deletedComment);
-    setComments(comments.filter((comment) => comment.index !== index));
+    setComments(comments.filter((comment) => comment.divIndex !== divIndex && comment.cursorIndex !== cursorIndex));
   };
   
   return (
@@ -118,7 +120,8 @@ export default function Home() {
             setCommentsMap={setCommentsMap} 
             setShowPopup={setShowPopup}
             setClickPosition={setClickPosition}
-            setCommentIndex={setCommentIndex}
+            setCursorIndex={setCursorIndex}
+            setDivIndex={setDivIndex}
             setNewComment={setNewComment}
           />
         </div>
@@ -135,16 +138,16 @@ export default function Home() {
                 textValue={comment.content}
                 // initialY={dialogTopOffset.current}
                 // y={comment.y}
-                onDelete={() => onDelete(comment.index)}
+                onDelete={() => onDelete(comment.divIndex, comment.cursorIndex)}
                 dialogHeight={comment.dialogHeight} // use container to set its own height
                 setDialogHeight={(height: number) => {
                   console.log('setDialogHeight height: ', height);
-                  console.log('setDialogHeight comment.index: ', comment.index);
+                  console.log('setDialogHeight comment.cursorIndex: ', comment.cursorIndex);
                   // update dialogHeight
                   const updatedComments = [...comments];
                   updatedComments[index].dialogHeight = height;
                   setComments(updatedComments);
-                  commentsMap.set(comment.index, { ...comment, dialogHeight: height });
+                  commentsMap.set(`${comment.divIndex}-${comment.cursorIndex}`, { ...comment, dialogHeight: height });
                 }}
               />
             )

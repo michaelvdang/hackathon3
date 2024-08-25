@@ -1,7 +1,8 @@
 
 export interface Comment {
   id: string;
-  index: number;
+  cursorIndex: number;
+  divIndex: number;
   content: string;
   x: number;
   y: number;
@@ -9,4 +10,5 @@ export interface Comment {
   bottomOffset: number;
 }
 
-export type CommentMap = Map<number, Comment>;
+
+export type CommentMap = Map<string, Comment>;

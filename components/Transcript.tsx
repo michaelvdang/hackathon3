@@ -17,7 +17,8 @@ interface TranscriptProps {
   setCommentsMap: (commentsMap: CommentMap) => void;
   setShowPopup: (showPopup: boolean) => void;
   setClickPosition: (clickPosition: { x: number; y: number }) => void;
-  setCommentIndex: (commentIndex: number) => void;
+  setCursorIndex: (commentIndex: number) => void;
+  setDivIndex: (divIndex: number) => void;
   setNewComment: (newComment: string) => void;
 }
 
@@ -28,7 +29,8 @@ const Transcript: React.FC<TranscriptProps> = ({
   setCommentsMap,
   setShowPopup,
   setClickPosition,
-  setCommentIndex,
+  setCursorIndex,
+  setDivIndex,
   setNewComment,
 })  => {
 
@@ -39,10 +41,9 @@ const Transcript: React.FC<TranscriptProps> = ({
     const messages = (conversation.messages.map((message, index) => (
       <div key={index} style={{ paddingBottom: '10px'}}>
         <span style={{ fontWeight: 'bold' }}>
-          {message.role}
+          {message.role + ": "}
         </span>
-        { ": "}
-        <span onClick={e => handleSpanClick(e, index)} style={{ cursor: 'pointer' }}>
+        <span onClick={e => handleSpanClick(e, index)} style={{ cursor: 'pointer'}}>
           {message.content}
         </span>
       </div>
@@ -56,10 +57,11 @@ const Transcript: React.FC<TranscriptProps> = ({
     console.log('commentsMap: ', commentsMap);
   }, [commentsMap]);
   
-
-  const handleSpanClick = (e: React.MouseEvent<HTMLSpanElement>, index: number): void => {
+  // to add or retrieve comments content and mark the div and cursor position as commented
+  const handleSpanClick = (e: React.MouseEvent<HTMLSpanElement>, divIndex: number): void => {
     e.preventDefault();
-    console.log('index: ', index);
+    console.log('divIndex: ', divIndex);
+    setDivIndex(divIndex);
 
     // Get cursor position
     const selection = window.getSelection();
@@ -70,16 +72,19 @@ const Transcript: React.FC<TranscriptProps> = ({
     const cursorPosition = range.startOffset;
     console.log('cursorPosition: ', cursorPosition);
 
+    const key = `${divIndex}-${cursorPosition}`; //
+    console.log('key: ', key);
+
     // check commentsMap for comment at cursor position
-    if (commentsMap.has(cursorPosition)) {
-      const comment = commentsMap.get(cursorPosition);
+    if (commentsMap.has(key)) {
+      const comment = commentsMap.get(key);
       if (comment) {
         setNewComment(comment.content);
       }
     } else {
       setNewComment('');
     }
-    setCommentIndex(cursorPosition);
+    setCursorIndex(cursorPosition);
 
     // Open popup dialog
     setClickPosition({ x: e.clientX, y: e.clientY });
@@ -100,22 +105,23 @@ const Transcript: React.FC<TranscriptProps> = ({
           className="absolute w-full left-0 right-0 top-0 border-2 border-white"
         >
           {comments.reduce((acc, comment, idx) => {
-            const prevIndex = idx === 0 ? 0 : comments[idx - 1].index + 1;
+            const prevIndex = idx === 0 ? 0 : comments[idx - 1].cursorIndex + 1;
 
             acc.push(
-              <span key={`text-${idx}`}>{content.slice(prevIndex, comments[idx].index )}</span>
+              <span key={`text-${idx}`}>{content.slice(prevIndex, comments[idx].cursorIndex )}</span>
             )
             acc.push(
-              <span id={randomId()} key={comment.id} style={{ color: 'red'}}>{content.slice(comments[idx].index, comments[idx].index + 1)}</span>
+              <span id={randomId()} key={comment.id} style={{ color: 'red'}}>{content.slice(comments[idx].cursorIndex, comments[idx].cursorIndex + 1)}</span>
             )
             return acc;
           }, [] as JSX.Element[])}
-          <span>{content.slice(comments.length > 0 ? comments[comments.length - 1].index + 1 : 0)}</span>
+          <span>{content.slice(comments.length > 0 ? comments[comments.length - 1].cursorIndex + 1 : 0)}</span>
         </div>
         {/* Displaying the actual content in the foreground */}
         <div
           className="absolute  h-full w-full left-0 right-0 top-0 border-2 border-white"
           // onClick={handleDivClick}
+          style={{opacity: 0.5}}
         >
           {content}
         </div>
