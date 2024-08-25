@@ -1,63 +1,47 @@
 import React, { useLayoutEffect } from 'react'
 import { useEffect, useRef, useState } from 'react';
 import AddCommentPopupDialog from '@/components/AddCommentPopupDialog';
-import { Comment, CommentMap } from '@/common/types';
 
 // random id generator
 const randomId = () => {
-  // return 'a'
-  return Math.random().toString(36).slice(2, 9);
+  return 'a'
+  // return Math.random().toString(36).slice(2, 9);
 };
 
-interface TranscriptProps {
-  comments: Comment[];
-  setComments: (comments: Comment[]) => void;
-  commentsMap: CommentMap;
-  setCommentsMap: (commentsMap: CommentMap) => void;
-  setShowPopup: (showPopup: boolean) => void;
-  setClickPosition: (clickPosition: { x: number; y: number }) => void;
-  setCommentIndex: (commentIndex: number) => void;
-  setNewComment: (newComment: string) => void;
+
+// Define the comment type
+interface Comment {
+  id: string;
+  index: number;
+  // content: string;
 }
 
-const Transcript: React.FC<TranscriptProps> = ({
-  comments,
-  setComments,
-  commentsMap,
-  setCommentsMap,
-  setShowPopup,
-  setClickPosition,
-  setCommentIndex,
-  setNewComment,
-})  => {
-
+// Create a type for the Map
+type CommentMap = Map<number, Comment>;
+const Transcript = () => {
+  const [showPopup, setShowPopup] = useState(false);
+  const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
   const [content, setContent] = useState<string>(
     `0123456789\n
-    0123456789\n0123456789\n0123456789\n0123456789\n
-    0123456789\n0123456789\n0123456789\n0123456789\n
     0123456789\n0123456789\n0123456789\n`
     // 'Hello, my name is John and I have a friend name .'
   );
-
+  const [commentsMap, setCommentsMap] = useState<CommentMap>(new Map());  // to remove comments
+  const [comments, setComments] = useState<Comment[]>([]);  // to render comments
   const parentRef = useRef<HTMLDivElement>(null);
   const [parentWidth, setParentWidth] = useState<number>(0);
+  const [newComment, setNewComment] = useState<string>('');
+  const [commentIndex, setCommentIndex] = useState<number>(0);
 
+  const closePopup = () => setShowPopup(false);
 
-  // useLayoutEffect(() => { // does not work
-  //   // get position of the comment markers on the page
-  //   setTimeout(() => {
-  //     for (let i = 0; i < comments.length; i++) {
-  //       console.log('comments[i].id: ', comments[i].id);
-  //       const element = document.getElementById(comments[i].id);
-  //       if (element) {
-  //         var rect = element.getBoundingClientRect();
-  //         console.log('rect: ', rect);
-  //       }else {
-  //         console.log(`Element ${comments[i].id} not found.`);
-  //       }
-  //     }
-  //   }, 3000);
-  // }, [comments]);
+  useLayoutEffect(() => {
+    const element = document.getElementById('a');
+    if (element) {
+      var rect = element.getBoundingClientRect();
+      console.log('rect: ', rect);
+    }
+  }, [comments]);
 
   useEffect(() => {
     if (parentRef.current) {
@@ -79,37 +63,87 @@ const Transcript: React.FC<TranscriptProps> = ({
   const handleDivClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     e.preventDefault();
 
-    // Get cursor position
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
     // console.log('selection: ', selection);
     const range = selection.getRangeAt(0);
     // console.log('range: ', range);
     const cursorPosition = range.startOffset;
-    console.log('cursorPosition: ', cursorPosition);
+    // console.log('cursorPosition: ', cursorPosition);
 
-    // check commentsMap for comment at cursor position
-    if (commentsMap.has(cursorPosition)) {
-      const comment = commentsMap.get(cursorPosition);
-      if (comment) {
-        setNewComment(comment.content);
-      }
-    } else {
-      setNewComment('');
-    }
     setCommentIndex(cursorPosition);
+
+    // remove comment if it already exists
+    if (commentsMap.has(cursorPosition)) {
+      commentsMap.delete(cursorPosition);
+    } else {
+      commentsMap.set(cursorPosition, { id: randomId(), index: cursorPosition });
+    }
+
+    // convert map to comments array
+    let updatedComments: { id: string; index: number }[] = [];
+    commentsMap.forEach((comment, index) => {
+      updatedComments.push({ id: comment.id, index });
+    })
+    updatedComments.sort((a, b) => a.index - b.index);
+    setComments(updatedComments);
+    // console.log('updatedComments: ', updatedComments);
 
     // Open popup dialog
     setClickPosition({ x: e.clientX, y: e.clientY });
     setShowPopup(true);
   };
 
+  // get comment from map based on comment index
+
+  const getComment = () => {
+    if (commentsMap.has(commentIndex)) {
+      const comment = commentsMap.get(commentIndex);
+      if (comment) {
+        // setNewComment(comment.content);
+        return comment;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  const updateComments = () => {
+    // remove comment if it already exists
+    if (commentsMap.has(commentIndex)) {
+      commentsMap.delete(commentIndex);
+    } else {
+      commentsMap.set(commentIndex, { id: randomId(), index: commentIndex });
+    }
+
+    // convert map to comments array
+    let updatedComments: { id: string; index: number }[] = [];
+    commentsMap.forEach((comment, index) => {
+      updatedComments.push({ id: comment.id, index });
+    })
+    updatedComments.sort((a, b) => a.index - b.index);
+    setComments(updatedComments);
+    // console.log('updatedComments: ', updatedComments);
+  }
+
+  const onSubmit = () => {
+    if (!newComment) {
+      alert('Please enter a comment');
+      return;
+    }
+
+    
+    
+    // Add your submit logic here
+    console.log("commentsMap: ", commentsMap);
+    closePopup();
+  };
   return (
     <>
       {/* transcript section  */}
       <div
         ref={parentRef} 
-        className="relative h-full "
+        className="relative h-full w-full "
       >
         
         <div 
@@ -136,7 +170,7 @@ const Transcript: React.FC<TranscriptProps> = ({
         >
           <span style={{ opacity: '0'}}>{content}</span>
         </div>
-        {/* {showPopup && (
+        {showPopup && (
           <AddCommentPopupDialog
             x={clickPosition.x}
             y={clickPosition.y}
@@ -146,7 +180,7 @@ const Transcript: React.FC<TranscriptProps> = ({
             onClose={closePopup}
             onSubmit={onSubmit}
           />
-        )} */}
+        )}
       </div>
     </>
   )

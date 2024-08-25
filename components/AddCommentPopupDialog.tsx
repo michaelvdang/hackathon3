@@ -1,7 +1,7 @@
-// components/PopupDialog.tsx
+// components/AddCommentPopupDialog.tsx
 import React, { useEffect, useRef, useState } from 'react';
 
-type PopupDialogProps = {
+type AddCommentPopupDialogProps = {
   x: number;
   y: number;
   parentWidth?: number
@@ -11,12 +11,13 @@ type PopupDialogProps = {
   onSubmit: () => void;
 };
 
-const PopupDialog: React.FC<PopupDialogProps> = ({ x, y, parentWidth = 10000, textValue, setTextValue,onClose, onSubmit }) => {
+const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, parentWidth = 10000, textValue, setTextValue,onClose, onSubmit }) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const dialogRef = useRef<HTMLDivElement>(null);
   const [dialogWidth, setDialogWidth] = useState(0);
 
   useEffect(() => {
+    // get dialog width to adjust for overflow on right side
     if (dialogRef.current) {
       setDialogWidth(dialogRef.current.offsetWidth);
       // console.log('dialogWidth: ', dialogRef.current.offsetWidth);
@@ -26,14 +27,15 @@ const PopupDialog: React.FC<PopupDialogProps> = ({ x, y, parentWidth = 10000, te
   useEffect(() => {
     // Adjust position to account for dialog size
     const verticalOffset = -64; // Add some offset to avoid placing it directly under the cursor
-    const offset = 10; // Add some offset to avoid placing it directly under the cursor
+    const offset = 0; // Add some offset to avoid placing it directly under the cursor
     // console.log('x: ', x);
     // console.log('dialogWidth: ', dialogWidth);
     // console.log('prentWidth: ', parentWidth);
     const left = x + dialogWidth + offset > parentWidth ? x - dialogWidth - offset : x + offset;
     setPosition({
       top: y + offset + verticalOffset,
-      left: left,
+      // left: left,
+      left: 10,
     });
   }, [x, y, dialogWidth, parentWidth]);
 
@@ -78,4 +80,4 @@ const PopupDialog: React.FC<PopupDialogProps> = ({ x, y, parentWidth = 10000, te
   );
 };
 
-export default PopupDialog;
+export default AddCommentPopupDialog;
