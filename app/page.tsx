@@ -1,13 +1,17 @@
 'use client'
 import Image from "next/image";
-import conversation from "../conversation.json";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Transcript from "@/components/Transcript";
-import { Comment, CommentMap } from "@/common/types";
+import { Comment, CommentMap, TranscriptMessage } from "@/common/types";
 import AddCommentPopupDialog from "@/components/AddCommentPopupDialog";
 import CommentDialog from "@/components/CommentDialog";
 import { comment } from "postcss";
 import useScroll from "@/hooks/useScroll";
+import CommentsSummary from "@/components/CommentsSummary";
+import SaveSection from "@/components/SaveSection";
+import conversation from "../conversation.json";
+
+const commentDialogOffset = 40;
 
 // random id generator
 const randomId = () => {
@@ -15,12 +19,14 @@ const randomId = () => {
   return Math.random().toString(36).slice(2, 9);
 };
 export default function Home() {
+  const [conversationId, setConversationId] = useState<string>('');
+  const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);  // to render comments
   const [commentsMap, setCommentsMap] = useState<CommentMap>(new Map());  // to remove comments
   const [showPopup, setShowPopup] = useState(false);
   const [cursorIndex, setCursorIndex] = useState<number>(0); // position of the cursor in the transcript, 'I like cats', comment at k would make cursorIndex = 4
   const [divIndex, setDivIndex] = useState<number>(0);
-  const [newComment, setNewComment] = useState<string>(''); // value in the AddCommentPopupDialog
+  const [newCommentContent, setNewCommentContent] = useState<string>(''); // value in the AddCommentPopupDialog
   const closePopup = () => setShowPopup(false);
   const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
   // const dialogTopOffset = useRef<number>(0);
@@ -29,6 +35,69 @@ export default function Home() {
   const [containerTopOffset, setContainerTopOffset] = useState<number>(0);
 
   const scrollPosition = useScroll();
+
+  const [content, setContent] = useState<JSX.Element[]>([]);
+  // const [content, setContent] = useState<string>('');
+
+  // useEffect(() => {
+  //   const transcriptMessages = conversation.messages.map((message, index) => ({
+  //       role: message.role,
+  //       content: message.content
+  //     })
+  //   );
+  //   console.log('transcriptMessages: ', transcriptMessages);
+  //   setMessages(transcriptMessages);
+  // }, []);
+
+  // to render transcript  with click listener
+  useEffect(() => {
+    const newMessages = (messages.map((message, index) => (
+      <div key={index} style={{ paddingBottom: '10px'}}>
+        <span style={{ fontWeight: 'bold' }}>
+          {message.role + ": "}
+        </span>
+        <span onClick={e => handleSpanClick(e, index)} style={{ cursor: 'pointer'}}>
+          {message.content}
+        </span>
+      </div>
+    )));
+
+    setContent(newMessages);
+  }, [messages]);
+
+    // to add or retrieve comments content and mark the div and cursor position as commented
+  const handleSpanClick = (e: React.MouseEvent<HTMLSpanElement>, divIndex: number): void => {
+      e.preventDefault();
+      console.log('divIndex: ', divIndex);
+      setDivIndex(divIndex);
+  
+      // Get cursor position
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      // console.log('selection: ', selection);
+      const range = selection.getRangeAt(0);
+      // console.log('range: ', range);
+      const cursorPosition = range.startOffset;
+      console.log('cursorPosition: ', cursorPosition);
+  
+      const key = `${divIndex}-${cursorPosition}`; //
+      console.log('key: ', key);
+  
+      // check commentsMap for comment at cursor position
+      if (commentsMap.has(divIndex)) {
+        const comment = commentsMap.get(divIndex);
+        if (comment) {
+          setNewCommentContent(comment.content);
+        }
+      } else {
+        setNewCommentContent('');
+      }
+      setCursorIndex(cursorPosition);
+  
+      // Open popup dialog
+      setClickPosition({ x: e.clientX, y: e.clientY });
+      setShowPopup(true);
+    };
   
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -50,7 +119,7 @@ export default function Home() {
     if (comments.length > 0) {
       let offsets = [comments[0].y];
       for (let i = 1; i < comments.length; i++) {
-        offsets.push(Math.max(offsets[i-1] + comments[i-1].dialogHeight, comments[i].y));
+        offsets.push(Math.max(offsets[i-1] + comments[i-1].dialogHeight, comments[i].y - commentDialogOffset));
       }
       setDialogTopOffset(offsets);
     }
@@ -60,15 +129,17 @@ export default function Home() {
     // convert map to comments array
     let updatedComments: Comment[] = [];
     commentsMap.forEach((comment, index) => {
-      updatedComments.push({ id: comment.id, cursorIndex: comment.cursorIndex, divIndex: comment.divIndex, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0, bottomOffset: 0 });
+      updatedComments.push({ id: comment.id, cursorIndex: comment.cursorIndex, divIndex: comment.divIndex, content: comment.content, x: comment.x, y: comment.y, dialogHeight: 0, bottomOffset: 0, type: 'text' });
     })
     updatedComments.sort((a, b) => a.divIndex === b.divIndex ? a.cursorIndex - b.cursorIndex : a.divIndex - b.divIndex); // sort comments first by divIndex and then cursorIndex
+    console.log('updatedComments: ', updatedComments);
     setComments(() => updatedComments);
     // console.log('updatedComments: ', updatedComments);
   }
   
   const addComment = () => {
-    commentsMap.set(divIndex, { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newComment, x: clickPosition.x, y: clickPosition.y + scrollPosition, dialogHeight: 0, bottomOffset: 0 });
+    const commentObj = { id: randomId(), cursorIndex: cursorIndex, divIndex: divIndex, content: newCommentContent, x: clickPosition.x, y: clickPosition.y + scrollPosition, dialogHeight: 0, bottomOffset: 0, type: 'text' }
+    commentsMap.set(divIndex, commentObj);
 
     convertCommentsMapToArray();
     // // convert map to comments array
@@ -83,7 +154,7 @@ export default function Home() {
 
   const onSubmit = () => {
     // Add your submit logic here
-    if (!newComment) {
+    if (!newCommentContent) {
       alert('Please enter a comment');
       return;
     }
@@ -107,17 +178,18 @@ export default function Home() {
     <>
     <div
       ref={containerRef}
-      className=" bg-red-400 max-w-screen-xl mx-auto mt-16"
+      className="container max-w-screen-xl mx-auto mt-16"
     >
       {/* container for transcript and comments sections */}
       <div 
-        className="bg-blue-700 flex flex-nowrap min-w-[1280px] "
+        className="flex flex-nowrap min-w-[1280px] rounded-t-3xl"
       >
         {/* transcript section  */}
         <div 
-          className=" bg-orange-300 min-w-[960px] w-[960px] flex-grow relative"
+          className="min-w-[960px] w-[960px] flex-grow relative p-4 "
         >
           <Transcript 
+            content={content}
             comments={comments} 
             setComments={setComments} 
             commentsMap={commentsMap} 
@@ -126,12 +198,12 @@ export default function Home() {
             setClickPosition={setClickPosition}
             setCursorIndex={setCursorIndex}
             setDivIndex={setDivIndex}
-            setNewComment={setNewComment}
+            setNewCommentContent={setNewCommentContent}
           />
         </div>
         {/* comments section  */}
         <div 
-          className="relative bg-green-700 min-w-[320px] w-[320px] "
+          className="comments relative min-w-[320px] w-[320px] p-4 rounded-tr-3xl"
         >
           {comments.map((comment, index) => {
             // dialogTopOffset.current = dialogTopOffset.current + comment.dialogHeight;
@@ -162,8 +234,8 @@ export default function Home() {
               y={clickPosition.y - containerTopOffset + scrollPosition}
               // verticalOffset={-1 * containerTopOffset}
               // parentWidth={parentWidth}
-              textValue={newComment}
-              setTextValue={setNewComment}
+              textValue={newCommentContent}
+              setTextValue={setNewCommentContent}
               onClose={closePopup}
               onSubmit={onSubmit}
             />
@@ -172,11 +244,18 @@ export default function Home() {
       </div>
       {/* comments summary section  */}
       
-    <div
-      className="bg-yellow-700"
-    >
-      Bottom
-    </div>
+      <div
+        className="rounded-b-3xl p-4"
+      >
+        <CommentsSummary content={content} comments={comments} />
+      </div>
+      {/* save button section  */}
+      
+      <div
+        className="rounded-b-3xl p-4"
+      >
+        <SaveSection messages={messages} setMessages={setMessages} commentsMap={commentsMap} setCommentsMap={setCommentsMap} convertCommentsMapToArray={convertCommentsMapToArray}/>
+      </div>
     </div>
     </>
   );

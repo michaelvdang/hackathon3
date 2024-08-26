@@ -61,7 +61,7 @@ const CommentDialog: React.FC<CommentDialog> = ({
       //     setDialogHeight(el.offsetHeight);
       //   }
       // }}
-      className="absolute w-[320px] z-50 border border-gray-300 p-4 shadow-lg"
+      className="absolute w-[280px] z-50 border border-gray-300 p-4 shadow-lg"
       // style={{ top: position.top, left: position.left }}
       style={{ top: position.top, left: 0 }}
       onClick={(e) => e.stopPropagation()}
@@ -70,15 +70,18 @@ const CommentDialog: React.FC<CommentDialog> = ({
         <div
           className='flex justify-between'
         >
-        <h2 className="text-lg font-semibold">User name</h2>
+        <h2 className="text-md font-semibold">User name</h2>
         <button
+          className='text-red-500'
           onClick={onDelete}
-        >Delete</button>
+        >
+          Delete
+        </button>
         </div>
         <article
-          className='text-wrap bg-red-300 break-words'
+          className='text-wrap break-words'
         >
-          <p className='bg-blue-300'>{textValue}</p>
+          <p className=''>{textValue}</p>
         </article>
       </div>
     </div>

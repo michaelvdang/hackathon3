@@ -11,6 +11,7 @@ const randomId = () => {
 };
 
 interface TranscriptProps {
+  content: JSX.Element[];
   comments: Comment[];
   setComments: (comments: Comment[]) => void;
   commentsMap: CommentMap;
@@ -19,10 +20,11 @@ interface TranscriptProps {
   setClickPosition: (clickPosition: { x: number; y: number }) => void;
   setCursorIndex: (commentIndex: number) => void;
   setDivIndex: (divIndex: number) => void;
-  setNewComment: (newComment: string) => void;
+  setNewCommentContent: (newComment: string) => void;
 }
 
 const Transcript: React.FC<TranscriptProps> = ({
+  content, 
   comments,
   setComments,
   commentsMap,
@@ -31,30 +33,13 @@ const Transcript: React.FC<TranscriptProps> = ({
   setClickPosition,
   setCursorIndex,
   setDivIndex,
-  setNewComment,
+  setNewCommentContent,
 })  => {
 
-  const [content, setContent] = useState<JSX.Element[]>([]);
-  // const [content, setContent] = useState<string>('');
-
-  useEffect(() => {
-    const messages = (conversation.messages.map((message, index) => (
-      <div key={index} style={{ paddingBottom: '10px'}}>
-        <span style={{ fontWeight: 'bold' }}>
-          {message.role + ": "}
-        </span>
-        <span onClick={e => handleSpanClick(e, index)} style={{ cursor: 'pointer'}}>
-          {message.content}
-        </span>
-      </div>
-    )));
-
-    setContent(messages);
-  }, []);
   
 
   useEffect(() => {
-    console.log('commentsMap: ', commentsMap);
+    console.log('Transcript useEffect commentsMap: ', commentsMap);
   }, [commentsMap]);
   
   // to add or retrieve comments content and mark the div and cursor position as commented
@@ -79,10 +64,10 @@ const Transcript: React.FC<TranscriptProps> = ({
     if (commentsMap.has(divIndex)) {
       const comment = commentsMap.get(divIndex);
       if (comment) {
-        setNewComment(comment.content);
+        setNewCommentContent(comment.content);
       }
     } else {
-      setNewComment('');
+      setNewCommentContent('');
     }
     setCursorIndex(cursorPosition);
 
@@ -96,16 +81,17 @@ const Transcript: React.FC<TranscriptProps> = ({
       {/* transcript section  */}
       <div
         // ref={parentRef} 
-        className="relative"
+        className="transcript relative"
       >
         {/* Adding style markers to the content */}
         <div 
           id="mytxt" 
           contentEditable={false} 
-          className="w-full border-2 border-white"
+          className="w-full "
         >
+          {/* Highlight divs with comments */}
           {comments.reduce((acc, comment, idx) => {
-            console.log('comment: ', comment);
+            // console.log('comment: ', comment);
             const prevIndex = idx === 0 ? 0 : comments[idx - 1].divIndex + 1;
 
             acc.push(
@@ -132,7 +118,7 @@ const Transcript: React.FC<TranscriptProps> = ({
             y={clickPosition.y}
             // parentWidth={parentWidth}
             textValue={newComment}
-            setTextValue={setNewComment}
+            setTextValue={setNewCommentContent}
             onClose={closePopup}
             onSubmit={onSubmit}
           />

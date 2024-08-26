@@ -1,5 +1,8 @@
 // components/AddCommentPopupDialog.tsx
 import React, { useEffect, useRef, useState } from 'react';
+import AssetPicker from './AssetPicker';
+import { IconButton } from '@mui/material';
+import { BiCloudUpload } from "react-icons/bi";
 
 type AddCommentPopupDialogProps = {
   x: number;
@@ -42,6 +45,14 @@ const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, ver
     });
   }, [x, y, dialogWidth, parentWidth]);
 
+  const handleAttach = () => {
+
+    console.log("Item attached");
+    onClose();
+  };
+
+
+  
   return (
     <div
       ref={dialogRef}
@@ -50,7 +61,18 @@ const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, ver
       onClick={(e) => e.stopPropagation()}
     >
       <div>
-        <h2 className="text-lg text-black font-semibold">Add Comment</h2>
+        <div
+          className="flex justify-between"
+        >
+          <h2 className="text-lg text-black font-semibold">Add Comment</h2>
+
+          {/* <button
+            className="w-20 mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            // onClick={handleAttach}
+          >
+          </button> */}
+            <AssetPicker />
+        </div>
         <textarea 
           className="w-full border border-gray-300 rounded-md p-2 mt-2 text-black"
           value={textValue}
@@ -69,7 +91,7 @@ const AddCommentPopupDialog: React.FC<AddCommentPopupDialogProps> = ({ x, y, ver
             className="w-20 mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             onClick={onClose}
           >
-            Close
+            Cancel
           </button>
           <button
             className="w-20 mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
